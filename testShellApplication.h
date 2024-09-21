@@ -7,12 +7,15 @@
 #include <sstream>
 
 #include "testScript.h"
+#include "ssd.h"
 
+/*
 template <typename T>
 class LogicalBlock;
 
 template <typename T>
 class Storage;
+*/
 
 template <typename T> class TestShellApplication {
 private:
