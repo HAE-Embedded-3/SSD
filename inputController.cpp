@@ -2,6 +2,16 @@
 #include <sstream>
 #include <stdexcept>
 
+// 예외 string
+namespace Exception {
+    const std::string INVALID_COMMAND = "INVALID COMMAND";
+}
+
+namespace StorageInfo {
+    const std::string LBA_PREFIX = "0x";
+    const int LBA_SIZE = 10;
+} // namespace StorageInfo
+
 bool InputController::isHex(const char ch) {
     return isdigit(ch) || (ch >= 'A' && ch <= 'F');
 }
@@ -13,7 +23,7 @@ bool InputController::isValidLBA(const std::string &lba) {
 
     for (char c : lba) {
         if (!std::isdigit(c)) {
-            return false; // 숫자가 아닌 경우 false
+            return false;
         }
     }
 
@@ -21,7 +31,7 @@ bool InputController::isValidLBA(const std::string &lba) {
 }
 
 bool InputController::isValidAddress(const std::string &address) {
-    if (address.substr(0, 2) != "0x" || address.size() != 10)
+    if (address.substr(0, 2) != StorageInfo::LBA_PREFIX || address.size() != StorageInfo::LBA_SIZE)
         return false;
 
     for (size_t i = 2; i < address.size(); ++i) {
@@ -64,6 +74,7 @@ void InputController::validateInput(const std::vector<std::string> &input) {
     }
 }
 
+// " ", 공백 split
 std::vector<std::string> InputController::split(std::string str) {
     std::stringstream ss(str);
     std::string buffer;
@@ -77,7 +88,21 @@ std::vector<std::string> InputController::split(std::string str) {
     return result;
 }
 
-void InputController::splitByDelimiter(std::string str, std::string delimiter) {
+// delimiter split
+std::vector<std::string> InputController::splitByDelimiter(std::string str, std::string delimiter) {
+    std::vector<std::string> result;
+    auto start = 0;
+    auto end = str.find(delimiter);
+    while (end != std::string::npos) {
+        std::string sub_str = str.substr(start, end - start);
+        if (!sub_str.empty()) {
+            result.push_back(sub_str);
+        }
+        start = end + delimiter.size();
+        end = str.find(delimiter, start);
+    }
+    result.push_back(str.substr(start));
+    return result;
 }
 
 InputController::InputController() {
@@ -89,29 +114,26 @@ InputController::InputController() {
                   {"fullread", Command::FULLREAD}};
 }
 
-void InputController::input() {
+std::vector<std::string> InputController::input() {
     std::string input;
 
-    std::cout << ">>" << " ";
+    std::cout << ">>"
+              << " ";
 
     getline(std::cin, input);
-
-    if (input == "end") {
-        return;
-    }
 
     std::vector<std::string> inputv = split(input);
 
     try {
         validateInput(inputv);
-        std::cout << "input : " << input << std::endl;
-        std::cout << "input size : " << inputv.size() << std::endl;
-    } catch (std::invalid_argument) {
-        std::cout << "INVALID COMMAND" << std::endl;
+        return inputv;
+    } catch (std::invalid_argument &e) {
+        std::cout << e.what() << std::endl;
+        throw;
     }
-    std::cout << std::endl;
 }
 
+/// commandMap에서 찾음
 Command InputController::findCommand(const std::string &cmd) {
     auto it = commandMap.find(cmd);
     if (it != commandMap.end()) {
