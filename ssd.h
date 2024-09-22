@@ -18,7 +18,7 @@ public:
         return std::to_string(data);
     }
     friend std::ostream& operator<<(std::ostream& os, const LogicalBlock<T>& block) {
-        os << block.data; // TÀÇ µ¥ÀÌÅÍ¸¦ Ãâ·Â
+        os << block.data; // Tì˜ ë°ì´í„°ë¥¼ ì¶œë ¥
         return os;
     }
 };
@@ -26,7 +26,7 @@ public:
 template <typename T>
 class Storage {
 public:
-    // ¼ø¼ö°¡»óÇÔ¼ö ¼±¾ğ
+    // ìˆœìˆ˜ê°€ìƒí•¨ìˆ˜ ì„ ì–¸
     virtual void write(uint32_t index, LogicalBlock<T> data) = 0;
     virtual void read(uint32_t index) = 0;
 };
@@ -35,7 +35,7 @@ template <typename T>
 class SSD : public Storage<T> {
 public:
     std::vector<LogicalBlock<T>> ssd;
-    void init(); // ÆÄÀÏ »ı¼º
+    void init(); // íŒŒì¼ ìƒì„±
 
 public:
     void write(uint32_t index, LogicalBlock<T> data);

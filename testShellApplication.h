@@ -2,12 +2,13 @@
 #define __TEST_SHELL_APPLICATION_H__
 
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
-#include "testScript.h"
 #include "ssd.h"
+#include "testScript.h"
+#include "inputController.h"
 
 /*
 template <typename T>
@@ -18,9 +19,10 @@ class Storage;
 */
 
 template <typename T> class TestShellApplication {
-private:
-    Storage<T>& _storage;
+  private:
+    Storage<T> &_storage;
     std::vector<TestScript> _testScripts{};
+    InputController _input_controller;
 
     void write();
     void read();
@@ -28,15 +30,15 @@ private:
     void help();
     void fullwrite();
     void fullread();
-    std::vector<std::string> split(std::string str, char delimiter);
 
-public:
+  public:
     void start();
-    void registerTestScript(TestScript& testScript);
+    void registerTestScript(TestScript &testScript);
     void executeTestScript(uint32_t index);
-    TestShellApplication(Storage<T>& storage);
-    TestShellApplication(const TestShellApplication& copy) = delete;
-    TestShellApplication operator=(const TestShellApplication& src) = delete;
+    TestShellApplication(Storage<T> &storage);
+    TestShellApplication(Storage<T> &storage,const InputController input_controller);
+    TestShellApplication(const TestShellApplication &copy) = delete;
+    TestShellApplication operator=(const TestShellApplication &src) = delete;
 };
 
 template <typename T> void TestShellApplication<T>::write() {
@@ -59,28 +61,18 @@ template <typename T> void TestShellApplication<T>::fullread() {
 
 template <typename T> void TestShellApplication<T>::start() {
     while (1) {
-        std::string test;
-
-        getline(std::cin, test);
-
-        if (test == "end") {
-            break;
-        }
-
-        std::vector<std::string> input = split(test, ' ');
-
+        _input_controller.input();
     }
 }
 
-template<typename T> void TestShellApplication<T>::registerTestScript(TestScript& script) {
+template <typename T> void TestShellApplication<T>::registerTestScript(TestScript &script) {
     _testScripts.push_back(script);
 }
 
-template <typename T>
-void TestShellApplication<T>::executeTestScript(uint32_t index) {
-    /* todo: «ÿ¥Á ¿Œµ¶Ω∫¿« Ω∫≈©∏≥∆Æ º¯¬˜¿˚¿∏∑Œ Ω««‡ */
-    for (auto& script : _testScripts) {
-        for (auto& command : script.getCommands()) {
+template <typename T> void TestShellApplication<T>::executeTestScript(uint32_t index) {
+    /* todo: Ìï¥Îãπ Ïù∏Îç±Ïä§Ïùò Ïä§ÌÅ¨Î¶ΩÌä∏ ÏàúÏ∞®Ï†ÅÏúºÎ°ú Ïã§Ìñâ */
+    for (auto &script : _testScripts) {
+        for (auto &command : script.getCommands()) {
             std::cout << command << std::endl;
         }
     }
@@ -88,20 +80,15 @@ void TestShellApplication<T>::executeTestScript(uint32_t index) {
 }
 
 template <typename T>
-TestShellApplication<T>::TestShellApplication(Storage<T>& storage) : _storage(storage) {}
+TestShellApplication<T>::TestShellApplication(Storage<T> &storage) : _storage(storage) {
+}
 
 template <typename T>
-std::vector<std::string> TestShellApplication<T>::split(std::string str, char Delimiter) {
-    std::istringstream iss(str);
-    std::string buffer;
+TestShellApplication<T>::TestShellApplication(Storage<T> &storage,const InputController input_controller) 
+    : _storage(storage),
+      _input_controller(input_controller){
 
-    std::vector<std::string> result;
-
-    while (getline(iss, buffer, Delimiter)) {
-        result.push_back(buffer);
-    }
-
-    return result;
 }
+
 
 #endif
