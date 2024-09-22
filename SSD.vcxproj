@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="inputController.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ssd.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inputController.h" />

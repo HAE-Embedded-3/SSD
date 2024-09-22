@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 
+#include "inputController.h"
 #include "ssd.h"
 #include "testScript.h"
-#include "inputController.h"
 
 /*
 template <typename T>
@@ -24,44 +24,114 @@ template <typename T> class TestShellApplication {
     std::vector<TestScript> _testScripts{};
     InputController _input_controller;
 
-    void write();
-    void read();
+    void write(const std::vector<std::string> &commands);
+    void read(const std::vector<std::string> &commands);
     void exit();
     void help();
     void fullwrite();
     void fullread();
+    void executeStorage(const std::vector<std::string> &commands); // storage에 동작 명령
 
   public:
     void start();
     void registerTestScript(TestScript &testScript);
     void executeTestScript(uint32_t index);
     TestShellApplication(Storage<T> &storage);
-    TestShellApplication(Storage<T> &storage,const InputController input_controller);
+    TestShellApplication(Storage<T> &storage, const InputController &input_controller);
     TestShellApplication(const TestShellApplication &copy) = delete;
     TestShellApplication operator=(const TestShellApplication &src) = delete;
 };
 
-template <typename T> void TestShellApplication<T>::write() {
+template <typename T>
+void TestShellApplication<T>::write(const std::vector<std::string> &commands) {
+    std::cout << "  [app write]" << std::endl;
+
+    uint32_t idx = static_cast<uint32_t>(stoul(commands[1], nullptr, 10));
+    std::string data = commands[2];
+
+    //_storage.write(idx idx, LogicalBlock<T>(data));
 }
 
-template <typename T> void TestShellApplication<T>::read() {
+template <typename T> 
+void TestShellApplication<T>::read(const std::vector<std::string> &commands) {
+    std::cout << "  [app read]" << std::endl;
+
+    uint32_t idx = static_cast<uint32_t>(stoul(commands[1], nullptr, 10));
+    //_storage.read(idx);
 }
 
-template <typename T> void TestShellApplication<T>::exit() {
+template <typename T> 
+void TestShellApplication<T>::exit() {
+    std::cout << "  [app exit]" << std::endl;
+    std::exit(0);
 }
 
-template <typename T> void TestShellApplication<T>::help() {
+template <typename T> 
+void TestShellApplication<T>::help() {
+    std::cout << "  [app help]" << std::endl;
 }
 
-template <typename T> void TestShellApplication<T>::fullwrite() {
+template <typename T> 
+void TestShellApplication<T>::fullwrite() {
+    std::cout << "  [app fullwrite]" << std::endl;
+
+    for (uint32_t idx = StorageInfo::MIN_LBA_IDX; idx <= StorageInfo::MAX_LBA_IDX; idx++) {
+        std::cout << "  write idx : " << idx << std::endl;
+        //_storage.write(idx,LogicalBlock<T>(StorageInfo::BASIC_DATA));
+    }
 }
 
-template <typename T> void TestShellApplication<T>::fullread() {
+template <typename T> 
+void TestShellApplication<T>::fullread() {
+    std::cout << "  [app fullread]" << std::endl;
+
+    for (uint32_t idx = StorageInfo::MIN_LBA_IDX; idx <= StorageInfo::MAX_LBA_IDX; idx++) {
+        std::cout << "  read idx : " << idx << std::endl;
+        //_storage.read(idx);
+    }
+}
+
+template <typename T>
+void TestShellApplication<T>::executeStorage(const std::vector<std::string> &commands) {
+
+    Command cmd = _input_controller.findCommand(commands[0]);
+
+    switch (cmd) {
+        case Command::WRITE:
+            write(commands);
+            break;
+        case Command::READ:
+            read(commands);
+            break;
+        case Command::EXIT:
+            exit();
+            break;
+        case Command::HELP:
+            help();
+            break;
+        case Command::FULLWRITE:
+            fullwrite();
+            break;
+        case Command::FULLREAD:
+            fullread();
+            break;
+        default:
+            break;
+    }
 }
 
 template <typename T> void TestShellApplication<T>::start() {
     while (1) {
-        _input_controller.input();
+        std::cout << std::endl;
+        std::vector<std::string> commands;
+
+        try {
+            commands = _input_controller.input();
+        } catch (...) {
+            continue;
+        }
+
+        executeStorage(commands);
     }
 }
 
@@ -84,11 +154,9 @@ TestShellApplication<T>::TestShellApplication(Storage<T> &storage) : _storage(st
 }
 
 template <typename T>
-TestShellApplication<T>::TestShellApplication(Storage<T> &storage,const InputController input_controller) 
-    : _storage(storage),
-      _input_controller(input_controller){
-
+TestShellApplication<T>::TestShellApplication(Storage<T> &storage,
+                                              const InputController &input_controller)
+    : _storage(storage), _input_controller(input_controller) {
 }
-
 
 #endif
