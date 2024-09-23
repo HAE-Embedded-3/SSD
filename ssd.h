@@ -3,8 +3,35 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
+#include <type_traits>
 #include <vector>
 #include <string>
+#include <iomanip>
+
+template <typename T>
+T hexStringToInteger(const std::string& hexStr) {
+	// 16진수 문자열이 "0x"로 시작하는지 확인
+	if (hexStr.substr(0, 2) != "0x") {
+		throw std::invalid_argument("String must start with '0x'");
+	}
+
+	T result;
+	std::stringstream ss;
+
+	// 16진수 문자열을 스트림에 삽입
+	ss << std::hex << hexStr.substr(2); // "0x" 이후의 부분만 사용
+
+	// 스트림에서 변환된 값을 읽어옴
+	ss >> result;
+
+	// 변환이 실패한 경우 예외 처리
+	if (ss.fail()) {
+		throw std::runtime_error("Conversion failed");
+	}
+
+	return result;
+}
 
 //로지컬 블럭 - 데이터형 설정 + string 형으로 바꿔주는 함수
 template <typename T>
@@ -14,6 +41,9 @@ public:
 
     LogicalBlock() : data(0) {}
     LogicalBlock(T value) : data(value) {}
+	LogicalBlock(const std::string& str) {
+		data = hexStringToInteger<T>(str);  // string을 int로 변환
+	}
 
     std::string toString() const {
         return std::to_string(data);
@@ -29,7 +59,7 @@ template <typename T>
 class Storage {
 public:
     // 순수가상함수 선언
-    virtual void write(uint32_t index, LogicalBlock<T> data) = 0;
+    virtual void write(uint32_t index, std::string data) = 0;
     virtual void read(uint32_t index) = 0;
 };
 
@@ -40,7 +70,7 @@ public:
     std::vector<LogicalBlock<T>> ssd;
 
     void init(); // 파일 생성
-    void write(uint32_t index, LogicalBlock<T> data);
+    void write(uint32_t index, std::string data);
     void read(uint32_t index);
 
     SSD() {
@@ -52,28 +82,48 @@ public:
 //nand.txt 기록 함수 -> nand.txt에 로지컬블럭 벡터 ssd write
 template <typename T>
 void SSD<T>::init() {
-	ssd.resize(100, T{ 0 });
-
-	std::fstream writeFile;
-	writeFile.open("nand.txt", std::ios::out | std::ios::trunc);
-	if (writeFile.is_open())
+	std::ifstream readFile;
+	readFile.open("nand.txt", std::ios::in);
+	if (readFile.is_open())
 	{
-		for (const auto& str : ssd) {
-			writeFile << str << std::endl;
+		//std::cout << "open! \n";
+		ssd.reserve(100);
+		std::string line;
+		while (std::getline(readFile, line)) {
+			ssd.push_back(LogicalBlock<T> (line));
+		}
+
+		readFile.close();
+	}
+	else { // nand.txt 파일 없을 때
+		ssd.resize(100, LogicalBlock<T>{ 0 });
+		std::ofstream writeFile;
+		writeFile.open("nand.txt", std::ios::out | std::ios::trunc);
+		if (writeFile.is_open())
+		{
+			for (const auto& str : ssd) { // T 자료형의 길이만큼 setw 설정
+				writeFile << "0x" << std::setw(8) << std::hex << std::setfill('0') << str << std::endl;
+			}
+			writeFile.close();
+		}
+		else {
+			std::cout << "can't create nand.txt\n";
 		}
 	}
-	writeFile.close();
 }
 
 //nand에 데어터 수정
 template <typename T>
-void SSD<T>::write(uint32_t index, LogicalBlock<T> data) {
+void SSD<T>::write(uint32_t index, std::string data) {
+	//LogicalBlock<T> block(data);
 
 	//100 이하의 index 필요 -> 조건에 맞으면 data 삽입
-	if (index >= 0 && index < 100) ssd[index] = data;
-	else std::cout << "WRITE INDEX ERROR" << std::endl;
+	if (index >= 0 && index < 100) 
+		ssd[index] = data;
+	else 
+		std::cout << "WRITE INDEX ERROR" << std::endl;
 
-	std::fstream readFile;
+	std::ifstream readFile;
 	readFile.open("nand.txt", std::ios::in | std::ios::out | std::ios::app);
 	//파일 데이터 수정하는 과정
 	if (readFile.is_open())
@@ -87,15 +137,23 @@ void SSD<T>::write(uint32_t index, LogicalBlock<T> data) {
 			tmp.push_back(line);
 		}
 		//inex가 현재 저장된 데이터 양보다 작은 경우 데어터를 데이터 string으로 변환 ???
-		if (index < tmp.size()) tmp[index] = data.toString();
+		//if (index < tmp.size()) tmp[index] = //uint32ToHexString(data.toString());
+		if (index < tmp.size())
+			tmp[index] = data;
+		//if (index < tmp.size()) tmp[index] = data;
 		//파일 닫기???
 		readFile.close();
-		readFile.open("nand.txt", std::ios::out | std::ios::trunc);
+		std::ofstream writeFile;
+		writeFile.open("nand.txt", std::ios::out | std::ios::trunc);
 		//임시 벡터에 저장한 데이터들 nand.txt에 저장
+		int linenum = 0;
 		for (const auto& str : tmp) {
-			readFile << str << std::endl;
+			if (linenum++ != index)
+				writeFile << str << std::endl;
+			else 
+				writeFile << std::setw(8) << std::hex << std::setfill('0') << str << std::endl;
 		}
-		readFile.close();
+		writeFile.close();
 	}
 	//파일 못 여는 경우 에러 출력
 	else {
@@ -114,8 +172,8 @@ void SSD<T>::read(uint32_t index) {
 	LogicalBlock<T> read_data = ssd[index];
 	std::fstream read_file("result.txt", std::ios::out | std::ios::trunc);
 	if (read_file.is_open()) {
-		read_file << read_data.toString() << std::endl;
-		std::cout << "출력 결과: " << read_data.toString() << std::endl;
+		read_file << "0x" << std::hex << read_data << std::endl;
+		std::cout << "0x" << std::hex << read_data << std::endl;
 		read_file.close();
 	}
 	//파일 못 여는 경우 에러
@@ -123,12 +181,12 @@ void SSD<T>::read(uint32_t index) {
 		std::cerr << "can't open the file \n";
 	}
 	
-	
+
 }
 
 //int main(void) {
 //	SSD<LogicalBlock<uint32_t>> ssd;
-//	ssd.write(3, LogicalBlock<uint32_t>(8));
+//	ssd.(write3, 8);
 //}
 
 #endif
