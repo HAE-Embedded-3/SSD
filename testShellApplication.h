@@ -28,7 +28,7 @@ template <typename T> class TestShellApplication {
     void read(const std::vector<std::string> &commands);
     void exit();
     void help();
-    void fullwrite();
+    void fullwrite(const std::vector<std::string>& commands);
     void fullread();
     void executeStorage(const std::vector<std::string> &commands); // storage에 동작 명령
 
@@ -49,7 +49,7 @@ void TestShellApplication<T>::write(const std::vector<std::string> &commands) {
     uint32_t idx = static_cast<uint32_t>(stoul(commands[1], nullptr, 10));
     std::string data = commands[2];
 
-    //_storage.write(idx idx, LogicalBlock<T>(data));
+    _storage.write(idx idx, data);
 }
 
 template <typename T> 
@@ -72,12 +72,13 @@ void TestShellApplication<T>::help() {
 }
 
 template <typename T> 
-void TestShellApplication<T>::fullwrite() {
+void TestShellApplication<T>::fullwrite(const std::vector<std::string>& commands) {
     std::cout << "  [app fullwrite]" << std::endl;
+        std::string& data = commands[1];
 
     for (uint32_t idx = StorageInfo::MIN_LBA_IDX; idx <= StorageInfo::MAX_LBA_IDX; idx++) {
         std::cout << "  write idx : " << idx << std::endl;
-        //_storage.write(idx,LogicalBlock<T>(StorageInfo::BASIC_DATA));
+        _storage.write(idx, data);
     }
 }
 
@@ -110,7 +111,7 @@ void TestShellApplication<T>::executeStorage(const std::vector<std::string> &com
             help();
             break;
         case Command::FULLWRITE:
-            fullwrite();
+            fullwrite(commands);
             break;
         case Command::FULLREAD:
             fullread();
