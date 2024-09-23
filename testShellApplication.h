@@ -49,7 +49,7 @@ void TestShellApplication<T>::write(const std::vector<std::string> &commands) {
     uint32_t idx = static_cast<uint32_t>(stoul(commands[1], nullptr, 10));
     std::string data = commands[2];
 
-    _storage.write(idx idx, data);
+    _storage.write(idx, data);
 }
 
 template <typename T> 
@@ -74,7 +74,7 @@ void TestShellApplication<T>::help() {
 template <typename T> 
 void TestShellApplication<T>::fullwrite(const std::vector<std::string>& commands) {
     std::cout << "  [app fullwrite]" << std::endl;
-        std::string& data = commands[1];
+        const std::string& data = commands[1];
 
     for (uint32_t idx = StorageInfo::MIN_LBA_IDX; idx <= StorageInfo::MAX_LBA_IDX; idx++) {
         std::cout << "  write idx : " << idx << std::endl;
