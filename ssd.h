@@ -120,48 +120,19 @@ void SSD<T>::init() {
 //nand에 데어터 수정
 template <typename T>
 void SSD<T>::write(uint32_t index, std::string data) {
-	//LogicalBlock<T> block(data);
-
-	if (index >= 0 && index < 100) 
-		ssd[index] = data;
-	else 
+	LogicalBlock<T> block(data);
+	if (index >= 0 && index < 100)
+		ssd[index] = block;
+	else
 		std::cout << "WRITE INDEX ERROR" << std::endl;
-
-	std::ifstream readFile;
-	readFile.open("nand.txt", std::ios::in | std::ios::out | std::ios::app);
-	//파일 데이터 수정하는 과정
-	if (readFile.is_open())
-	{
-		//임시 string 벡터 생성
-		std::vector<std::string> tmp;
-		//읽기용 string 변수
-		std::string line;
-		//txt파일 읽어 임시 벡터에 저장
-		while (std::getline(readFile, line)) {
-			tmp.push_back(line);
+	std::ofstream write_file("nand.txt");
+	if (write_file.is_open()) {
+		for (const auto& new_data : ssd) {
+			write_file << "0x" << std::hex << new_data << std::endl;
 		}
-		//if (index < tmp.size()) tmp[index] = //uint32ToHexString(data.toString());
-		if (index < tmp.size())
-			tmp[index] = data;
-		//if (index < tmp.size()) tmp[index] = data;
-
-		readFile.close();
-		std::ofstream writeFile;
-		writeFile.open("nand.txt", std::ios::out | std::ios::trunc);
-		int linenum = 0;
-
-		for (const auto& str : tmp) {
-			if (linenum++ != index)
-				writeFile << str << std::endl;
-			else 
-				writeFile << std::setw(8) << std::hex << std::setfill('0') << str << std::endl;
-		}
-		writeFile.close();
 	}
-	//파일 못 여는 경우 에러 출력
-	else {
-		std::cout << "can't open the file \n";
-	}
+	else std::cout << "FILE ERROR\n";
+
 }
 
 template <typename T>
