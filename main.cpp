@@ -6,6 +6,11 @@ int main(void) {
 	SSD<uint32_t> ssd;
     InputController input_controller;
     TestShellApplication<uint32_t> app(ssd,input_controller);
+    //È®ÀÎ¿ë
+    ssd.write(2, 12345);
+    ssd.write(234, 54321);
+    ssd.read(2);
+    ssd.read(514);
 
     app.start();
     //TestScript test_script;
