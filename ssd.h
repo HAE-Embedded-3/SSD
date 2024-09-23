@@ -1,45 +1,56 @@
 #ifndef __SSD_HPP__
 #define __SSD_HPP__
 
-#include <iostream>
 #include <fstream>
-#include <vector>
+#include <iostream>
 #include <string>
+#include <vector> 
 
-//·ÎÁöÄÃ ºí·° - µ¥ÀÌÅÍÇü ¼³Á¤ + string ÇüÀ¸·Î ¹Ù²ãÁÖ´Â ÇÔ¼ö
+namespace StorageInfo {
+    extern const uint32_t MAX_LBA_IDX;
+    extern const uint32_t MIN_LBA_IDX;
+    extern const std::string BASIC_DATA;
+} // namespace StorageInfo
+
+
+//ë¡œì§€ì»¬ ë¸”ëŸ­ - ë°ì´í„°í˜• ì„¤ì • + string í˜•ìœ¼ë¡œ ë°”ê¿”ì£¼ëŠ” í•¨ìˆ˜
 template <typename T>
 class LogicalBlock {
 public:
     T data;
 
-    LogicalBlock() : data(0) {}
-    LogicalBlock(T value) : data(value) {}
+    LogicalBlock() : data(0) {
+    }
+    LogicalBlock(T value) : data(value) {
+    }
 
     std::string toString() const {
         return std::to_string(data);
     }
-    friend std::ostream& operator<<(std::ostream& os, const LogicalBlock<T>& block) {
-        os << block.data; // TÀÇ µ¥ÀÌÅÍ¸¦ Ãâ·Â
+    friend std::ostream &operator<<(std::ostream &os, const LogicalBlock<T> &block) {
+        os << block.data; // TÂÂ˜ Âê³—ÂëŒ„Â„ê³•ï¿½ ç•°Âœï¿½
         return os;
     }
 };
 
-//ÀúÀå¼Ò ÀÎÅÍÆäÀÌ½º - write, read ÇÔ¼ö
+
+//ì €ì¥ì†Œ ì¸í„°í˜ì´ìŠ¤ - write, read í•¨ìˆ˜
 template <typename T>
 class Storage {
 public:
-    // ¼ø¼ö°¡»óÇÔ¼ö ¼±¾ğ
+    // ìˆœìˆ˜ê°€ìƒí•¨ìˆ˜ ì„ ì–¸
     virtual void write(uint32_t index, LogicalBlock<T> data) = 0;
     virtual void read(uint32_t index) = 0;
 };
 
-//SSD ÀúÀå¼Ò - ÀúÀå µ¥ÀÌÅÍ: ·ÎÁöÄÃºí·° º¤ÅÍ
+
+//SSD ì €ì¥ì†Œ - ì €ì¥ ë°ì´í„°: ë¡œì§€ì»¬ë¸”ëŸ­ ë²¡í„°
 template <typename T>
 class SSD : public Storage<T> {
 public:
     std::vector<LogicalBlock<T>> ssd;
 
-    void init(); // ÆÄÀÏ »ı¼º
+    void init(); // íŒŒì¼ ìƒì„±
     void write(uint32_t index, LogicalBlock<T> data);
     void read(uint32_t index);
 
@@ -48,8 +59,9 @@ public:
         init();
     }
 };
-//³»ºÎ¿¡ ³Ö¾îµµ µÇÁö ¾ÊÀ»±î...
-//nand.txt ±â·Ï ÇÔ¼ö -> nand.txt¿¡ ·ÎÁöÄÃºí·° º¤ÅÍ ssd write
+
+//ë‚´ë¶€ì— ë„£ì–´ë„ ë˜ì§€ ì•Šì„ê¹Œ...
+//nand.txt ê¸°ë¡ í•¨ìˆ˜ -> nand.txtì— ë¡œì§€ì»¬ë¸”ëŸ­ ë²¡í„° ssd write
 template <typename T>
 void SSD<T>::init() {
 	ssd.resize(100, T{ 0 });
@@ -65,39 +77,39 @@ void SSD<T>::init() {
 	writeFile.close();
 }
 
-//nand¿¡ µ¥¾îÅÍ ¼öÁ¤
+//nandì— ë°ì–´í„° ìˆ˜ì •
 template <typename T>
 void SSD<T>::write(uint32_t index, LogicalBlock<T> data) {
 
-	//100 ÀÌÇÏÀÇ index ÇÊ¿ä -> Á¶°Ç¿¡ ¸ÂÀ¸¸é data »ğÀÔ
+	//100 ì´í•˜ì˜ index í•„ìš” -> ì¡°ê±´ì— ë§ìœ¼ë©´ data ì‚½ì…
 	if (index >= 0 && index < 100) ssd[index] = data;
 	else std::cout << "WRITE INDEX ERROR" << std::endl;
 
 	std::fstream readFile;
 	readFile.open("nand.txt", std::ios::in | std::ios::out | std::ios::app);
-	//ÆÄÀÏ µ¥ÀÌÅÍ ¼öÁ¤ÇÏ´Â °úÁ¤
+	//íŒŒì¼ ë°ì´í„° ìˆ˜ì •í•˜ëŠ” ê³¼ì •
 	if (readFile.is_open())
 	{
-		//ÀÓ½Ã string º¤ÅÍ »ı¼º
+		//ì„ì‹œ string ë²¡í„° ìƒì„±
 		std::vector<std::string> tmp;
-		//ÀĞ±â¿ë string º¯¼ö
+		//ì½ê¸°ìš© string ë³€ìˆ˜
 		std::string line;
-		//txtÆÄÀÏ ÀĞ¾î ÀÓ½Ã º¤ÅÍ¿¡ ÀúÀå
+		//txtíŒŒì¼ ì½ì–´ ì„ì‹œ ë²¡í„°ì— ì €ì¥
 		while (std::getline(readFile, line)) {
 			tmp.push_back(line);
 		}
-		//inex°¡ ÇöÀç ÀúÀåµÈ µ¥ÀÌÅÍ ¾çº¸´Ù ÀÛÀº °æ¿ì µ¥¾îÅÍ¸¦ µ¥ÀÌÅÍ stringÀ¸·Î º¯È¯ ???
+		//inexê°€ í˜„ì¬ ì €ì¥ëœ ë°ì´í„° ì–‘ë³´ë‹¤ ì‘ì€ ê²½ìš° ë°ì–´í„°ë¥¼ ë°ì´í„° stringìœ¼ë¡œ ë³€í™˜ ???
 		if (index < tmp.size()) tmp[index] = data.toString();
-		//ÆÄÀÏ ´İ±â???
+		//íŒŒì¼ ë‹«ê¸°???
 		readFile.close();
 		readFile.open("nand.txt", std::ios::out | std::ios::trunc);
-		//ÀÓ½Ã º¤ÅÍ¿¡ ÀúÀåÇÑ µ¥ÀÌÅÍµé nand.txt¿¡ ÀúÀå
+		//ì„ì‹œ ë²¡í„°ì— ì €ì¥í•œ ë°ì´í„°ë“¤ nand.txtì— ì €ì¥
 		for (const auto& str : tmp) {
 			readFile << str << std::endl;
 		}
 		readFile.close();
 	}
-	//ÆÄÀÏ ¸ø ¿©´Â °æ¿ì ¿¡·¯ Ãâ·Â
+	//íŒŒì¼ ëª» ì—¬ëŠ” ê²½ìš° ì—ëŸ¬ ì¶œë ¥
 	else {
 		std::cout << "can't open the file \n";
 	}
@@ -105,30 +117,28 @@ void SSD<T>::write(uint32_t index, LogicalBlock<T> data) {
 
 template <typename T>
 void SSD<T>::read(uint32_t index) {
-	//index ¹üÀ§ È®ÀÎ
+	//index ë²”ìœ„ í™•ì¸
 	if (index < 0 || index >= 100) {
 		std::cerr << "READ INDEX ERROR" << std::endl;
 		return;
 	}
-	//ÇÊ¿äÇÑ µ¥ÀÌÅÍ result.txt¿¡ ÀúÀå ¹× Ãâ·Â
+	//í•„ìš”í•œ ë°ì´í„° result.txtì— ì €ì¥ ë° ì¶œë ¥
 	LogicalBlock<T> read_data = ssd[index];
 	std::fstream read_file("result.txt", std::ios::out | std::ios::trunc);
 	if (read_file.is_open()) {
 		read_file << read_data.toString() << std::endl;
-		std::cout << "Ãâ·Â °á°ú: " << read_data.toString() << std::endl;
+		std::cout << "ì¶œë ¥ ê²°ê³¼: " << read_data.toString() << std::endl;
 		read_file.close();
 	}
-	//ÆÄÀÏ ¸ø ¿©´Â °æ¿ì ¿¡·¯
+	//íŒŒì¼ ëª» ì—¬ëŠ” ê²½ìš° ì—ëŸ¬
 	else {
 		std::cerr << "can't open the file \n";
 	}
-	
-	
 }
 
-//int main(void) {
+// int main(void) {
 //	SSD<LogicalBlock<uint32_t>> ssd;
 //	ssd.write(3, LogicalBlock<uint32_t>(8));
-//}
+// }
 
 #endif

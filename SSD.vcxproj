@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -127,9 +127,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="inputController.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ssd.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inputController.h" />
     <ClInclude Include="ssd.h" />
     <ClInclude Include="testScript.h" />
     <ClInclude Include="testShellApplication.h" />

@@ -2,12 +2,13 @@
 #define __TEST_SHELL_APPLICATION_H__
 
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
-#include "testScript.h"
+#include "inputController.h"
 #include "ssd.h"
+#include "testScript.h" 
 
 /*
 template <typename T>
@@ -18,69 +19,130 @@ class Storage;
 */
 
 template <typename T> class TestShellApplication {
-private:
-    Storage<T>& _storage;
+  private:
+    Storage<T> &_storage;
     std::vector<TestScript> _testScripts{};
+    InputController _input_controller;
 
-    void write();
-    void read();
+    void write(const std::vector<std::string> &commands);
+    void read(const std::vector<std::string> &commands);
     void exit();
     void help();
     void fullwrite();
     void fullread();
-    std::vector<std::string> split(std::string str, char delimiter);
+    void executeStorage(const std::vector<std::string> &commands); // storageÏóê ÎèôÏûë Î™ÖÎ†π
 
-public:
+  public:
     void start();
-    void registerTestScript(TestScript& testScript);
+    void registerTestScript(TestScript &testScript);
     void executeTestScript(uint32_t index);
-    TestShellApplication(Storage<T>& storage);
-    TestShellApplication(const TestShellApplication& copy) = delete;
-    TestShellApplication operator=(const TestShellApplication& src) = delete;
+    TestShellApplication(Storage<T> &storage);
+    TestShellApplication(Storage<T> &storage, const InputController &input_controller);
+    TestShellApplication(const TestShellApplication &copy) = delete;
+    TestShellApplication operator=(const TestShellApplication &src) = delete;
 };
 
-template <typename T> void TestShellApplication<T>::write() {
+template <typename T>
+void TestShellApplication<T>::write(const std::vector<std::string> &commands) {
+    std::cout << "  [app write]" << std::endl;
+
+    uint32_t idx = static_cast<uint32_t>(stoul(commands[1], nullptr, 10));
+    std::string data = commands[2];
+
+    //_storage.write(idx idx, LogicalBlock<T>(data));
 }
 
-template <typename T> void TestShellApplication<T>::read() {
+template <typename T> 
+void TestShellApplication<T>::read(const std::vector<std::string> &commands) {
+    std::cout << "  [app read]" << std::endl;
+
+    uint32_t idx = static_cast<uint32_t>(stoul(commands[1], nullptr, 10));
+    //_storage.read(idx);
 }
 
-template <typename T> void TestShellApplication<T>::exit() {
+template <typename T> 
+void TestShellApplication<T>::exit() {
+    std::cout << "  [app exit]" << std::endl;
+    std::exit(0);
 }
 
-template <typename T> void TestShellApplication<T>::help() {
+template <typename T> 
+void TestShellApplication<T>::help() {
+    std::cout << "  [app help]" << std::endl;
 }
 
-template <typename T> void TestShellApplication<T>::fullwrite() {
+template <typename T> 
+void TestShellApplication<T>::fullwrite() {
+    std::cout << "  [app fullwrite]" << std::endl;
+
+    for (uint32_t idx = StorageInfo::MIN_LBA_IDX; idx <= StorageInfo::MAX_LBA_IDX; idx++) {
+        std::cout << "  write idx : " << idx << std::endl;
+        //_storage.write(idx,LogicalBlock<T>(StorageInfo::BASIC_DATA));
+    }
 }
 
-template <typename T> void TestShellApplication<T>::fullread() {
+template <typename T> 
+void TestShellApplication<T>::fullread() {
+    std::cout << "  [app fullread]" << std::endl;
+
+    for (uint32_t idx = StorageInfo::MIN_LBA_IDX; idx <= StorageInfo::MAX_LBA_IDX; idx++) {
+        std::cout << "  read idx : " << idx << std::endl;
+        //_storage.read(idx);
+    }
+}
+
+template <typename T>
+void TestShellApplication<T>::executeStorage(const std::vector<std::string> &commands) {
+
+    Command cmd = _input_controller.findCommand(commands[0]);
+
+    switch (cmd) {
+        case Command::WRITE:
+            write(commands);
+            break;
+        case Command::READ:
+            read(commands);
+            break;
+        case Command::EXIT:
+            exit();
+            break;
+        case Command::HELP:
+            help();
+            break;
+        case Command::FULLWRITE:
+            fullwrite();
+            break;
+        case Command::FULLREAD:
+            fullread();
+            break;
+        default:
+            break;
+    }
 }
 
 template <typename T> void TestShellApplication<T>::start() {
     while (1) {
-        std::string test;
+        std::cout << std::endl;
+        std::vector<std::string> commands;
 
-        getline(std::cin, test);
-
-        if (test == "end") {
-            break;
+        try {
+            commands = _input_controller.input();
+        } catch (...) {
+            continue;
         }
 
-        std::vector<std::string> input = split(test, ' ');
-
+        executeStorage(commands);
     }
 }
 
-template<typename T> void TestShellApplication<T>::registerTestScript(TestScript& script) {
+template <typename T> void TestShellApplication<T>::registerTestScript(TestScript &script) {
     _testScripts.push_back(script);
 }
 
-template <typename T>
-void TestShellApplication<T>::executeTestScript(uint32_t index) {
-    /* todo: «ÿ¥Á ¿Œµ¶Ω∫¿« Ω∫≈©∏≥∆Æ º¯¬˜¿˚¿∏∑Œ Ω««‡ */
-    for (auto& script : _testScripts) {
-        for (auto& command : script.getCommands()) {
+template <typename T> void TestShellApplication<T>::executeTestScript(uint32_t index) {
+    /* todo: Ìï¥Îãπ Ïù∏Îç±Ïä§Ïùò Ïä§ÌÅ¨Î¶ΩÌä∏ ÏàúÏ∞®Ï†ÅÏúºÎ°ú Ïã§Ìñâ */
+    for (auto &script : _testScripts) {
+        for (auto &command : script.getCommands()) {
             std::cout << command << std::endl;
         }
     }
@@ -88,20 +150,13 @@ void TestShellApplication<T>::executeTestScript(uint32_t index) {
 }
 
 template <typename T>
-TestShellApplication<T>::TestShellApplication(Storage<T>& storage) : _storage(storage) {}
+TestShellApplication<T>::TestShellApplication(Storage<T> &storage) : _storage(storage) {
+}
 
 template <typename T>
-std::vector<std::string> TestShellApplication<T>::split(std::string str, char Delimiter) {
-    std::istringstream iss(str);
-    std::string buffer;
-
-    std::vector<std::string> result;
-
-    while (getline(iss, buffer, Delimiter)) {
-        result.push_back(buffer);
-    }
-
-    return result;
+TestShellApplication<T>::TestShellApplication(Storage<T> &storage,
+                                              const InputController &input_controller)
+    : _storage(storage), _input_controller(input_controller) {
 }
 
 #endif
