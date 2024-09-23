@@ -6,14 +6,14 @@ int main(void) {
 	SSD<uint32_t> ssd;
     InputController input_controller;
     TestShellApplication<uint32_t> app(ssd,input_controller);
-    TestScript test_script;
+    TestScript test_script1, test_script2;
 
-    test_script.addCommand("fullwrite 0xDEADBEEF");
-    test_script.addCommand("fullread");
-    test_script.addCommand("write 0 0x10000000");
-    test_script.addCommand("read 0");
+    test_script1.addCommand("fullwrite 0xABCDFFFF");
+    app.registerTestScript(test_script1);
 
-    app.registerTestScript(test_script);
+    test_script2.addCommand("fullread");
+    app.registerTestScript(test_script2);
+
     app.start();
 
     return (0);
