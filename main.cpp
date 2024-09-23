@@ -15,7 +15,6 @@ int main(void) {
 
     app.registerTestScript(test_script);
     app.start();
-    //app.executeTestScript(1);
 
     return (0);
 }
