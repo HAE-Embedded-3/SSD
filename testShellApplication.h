@@ -57,7 +57,7 @@ void TestShellApplication<T>::read(const std::vector<std::string> &commands) {
     std::cout << "  [app read]" << std::endl;
 
     uint32_t idx = static_cast<uint32_t>(stoul(commands[1], nullptr, 10));
-    //_storage.read(idx);
+    _storage.read(idx);
 }
 
 template <typename T> 
@@ -77,7 +77,6 @@ void TestShellApplication<T>::fullwrite(const std::vector<std::string>& commands
         const std::string& data = commands[1];
 
     for (uint32_t idx = StorageInfo::MIN_LBA_IDX; idx <= StorageInfo::MAX_LBA_IDX; idx++) {
-        std::cout << "  write idx : " << idx << std::endl;
         _storage.write(idx, data);
     }
 }
@@ -87,8 +86,7 @@ void TestShellApplication<T>::fullread() {
     std::cout << "  [app fullread]" << std::endl;
 
     for (uint32_t idx = StorageInfo::MIN_LBA_IDX; idx <= StorageInfo::MAX_LBA_IDX; idx++) {
-        std::cout << "  read idx : " << idx << std::endl;
-        //_storage.read(idx);
+        _storage.read(idx);
     }
 }
 
