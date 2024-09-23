@@ -4,19 +4,17 @@
 
 int main(void) {
 	SSD<uint32_t> ssd;
-    TestShellApplication<uint32_t> app(ssd);
+    InputController input_controller;
+    TestShellApplication<uint32_t> app(ssd,input_controller);
     TestScript test_script;
-    //È®ÀÎ¿ë
-    ssd.write(2, ("0x12341234"));
-    //ssd.write(234, 54321);
-    ssd.read(25);
-    ssd.read(514);
 
     test_script.addCommand("fullwrite 0xDEADBEEF");
     test_script.addCommand("fullread");
+    test_script.addCommand("write 0 0x10000000");
+    test_script.addCommand("read 0");
 
     app.registerTestScript(test_script);
-    //app.executeTestScript(0);
+    app.start();
 
     return (0);
 }
