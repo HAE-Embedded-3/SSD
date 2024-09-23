@@ -28,7 +28,7 @@ public:
         return std::to_string(data);
     }
     friend std::ostream &operator<<(std::ostream &os, const LogicalBlock<T> &block) {
-        os << block.data; // T 곗댄곕� 異�
+        os << block.data;
         return os;
     }
 };

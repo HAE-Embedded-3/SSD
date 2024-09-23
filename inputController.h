@@ -5,6 +5,9 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <sstream>
+#include <stdexcept>
+#include <regex>
 
 /// <summary>
 /// 입력값 제한
@@ -16,6 +19,7 @@ enum class Command {
     HELP,
     FULLWRITE,
     FULLREAD,
+    TESTAPP,
     INVALID
 };
 
@@ -28,7 +32,7 @@ class InputController {
 
     bool isHex(const char ch);
     bool isValidLBA(const std::string &lba);
-    bool isValidAddress(const std::string &address);
+    bool isValidValue(const std::string &address);
     void validateInput(const std::vector<std::string> &input);
     std::vector<std::string> split(std::string str);
     std::vector<std::string> splitByDelimiter(std::string str, std::string delimiter);
@@ -38,7 +42,9 @@ class InputController {
     InputController &operator=(const InputController &src) = delete;
 
     std::vector<std::string> input();
+    std::vector<std::string> input(const std::string& cmd);
     Command findCommand(const std::string &cmd);
+    std::pair<Command, uint32_t> parseTestCommand(const std::string& cmd);
 };
 
 #endif // !1 

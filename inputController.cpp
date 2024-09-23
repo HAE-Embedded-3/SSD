@@ -1,6 +1,4 @@
 #include "inputController.h"
-#include <sstream>
-#include <stdexcept>
 
 // 예외 string
 namespace Exception {
@@ -30,7 +28,7 @@ bool InputController::isValidLBA(const std::string &lba) {
     return true;
 }
 
-bool InputController::isValidAddress(const std::string &address) {
+bool InputController::isValidValue(const std::string &address) {
     if (address.substr(0, 2) != StorageInfo::LBA_PREFIX || address.size() != StorageInfo::LBA_SIZE)
         return false;
 
@@ -52,7 +50,7 @@ void InputController::validateInput(const std::vector<std::string> &input) {
 
     switch (command) {
         case Command::WRITE:
-            if (input.size() != 3 || !isValidLBA(input[1]) || !isValidAddress(input[2])) {
+            if (input.size() != 3 || !isValidLBA(input[1]) || !isValidValue(input[2])) {
                 throw std::invalid_argument(Exception::INVALID_COMMAND);
             }
             break;
@@ -61,10 +59,19 @@ void InputController::validateInput(const std::vector<std::string> &input) {
                 throw std::invalid_argument(Exception::INVALID_COMMAND);
             }
             break;
+        case Command::FULLWRITE:
+            if (input.size() != 2 || !isValidValue(input[1])) {
+                throw std::invalid_argument(Exception::INVALID_COMMAND);
+            }
+            break;
         case Command::EXIT:
         case Command::HELP:
-        case Command::FULLWRITE:
         case Command::FULLREAD:
+            if (input.size() != 1) {
+                throw std::invalid_argument(Exception::INVALID_COMMAND);
+            }
+            break;
+        case Command::TESTAPP:
             if (input.size() != 1) {
                 throw std::invalid_argument(Exception::INVALID_COMMAND);
             }
@@ -106,12 +113,12 @@ std::vector<std::string> InputController::splitByDelimiter(std::string str, std:
 }
 
 InputController::InputController() {
-    commandMap = {{"write", Command::WRITE},
+    commandMap = { {"write", Command::WRITE},
                   {"read", Command::READ},
                   {"exit", Command::EXIT},
                   {"help", Command::HELP},
                   {"fullwrite", Command::FULLWRITE},
-                  {"fullread", Command::FULLREAD}};
+                  {"fullread", Command::FULLREAD} };
 }
 
 std::vector<std::string> InputController::input() {
@@ -133,6 +140,19 @@ std::vector<std::string> InputController::input() {
     }
 }
 
+std::vector<std::string> InputController::input(const std::string& cmd) {
+    std::vector<std::string> inputv = split(cmd);
+
+    try {
+        validateInput(inputv);
+        return inputv;
+    }
+    catch (std::invalid_argument& e) {
+        std::cout << e.what() << std::endl;
+        throw;
+    }
+}
+
 /// commandMap에서 찾음
 Command InputController::findCommand(const std::string &cmd) {
     auto it = commandMap.find(cmd);
@@ -140,5 +160,20 @@ Command InputController::findCommand(const std::string &cmd) {
         return it->second;
     }
 
+    auto testCommand = parseTestCommand(cmd);
+    if (testCommand.first == Command::TESTAPP)
+        return Command::TESTAPP;
+
     return Command::INVALID;
+}
+
+// testApp 명령어
+std::pair<Command, uint32_t> InputController::parseTestCommand(const std::string& cmd) {
+    std::regex pattern(R"(testApp(\d+))");
+    std::smatch matches;
+
+    if (std::regex_match(cmd, matches, pattern)) {
+        return { Command::TESTAPP, std::stoul(matches[1]) };
+    }
+    return { Command::INVALID, 0 };
 }
