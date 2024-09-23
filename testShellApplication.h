@@ -115,6 +115,11 @@ void TestShellApplication<T>::executeStorage(const std::vector<std::string> &com
         case Command::FULLREAD:
             fullread();
             break;
+        case Command::TESTAPP: {
+            auto testNum = _input_controller.parseTestCommand(commands[0]).second;
+            executeTestScript(testNum);
+            break;
+        }
         default:
             break;
     }
@@ -141,12 +146,16 @@ template <typename T> void TestShellApplication<T>::registerTestScript(TestScrip
 
 template <typename T> void TestShellApplication<T>::executeTestScript(uint32_t index) {
     /* todo: 해당 인덱스의 스크립트 순차적으로 실행 */
-    for (auto &script : _testScripts) {
-        for (auto &command : script.getCommands()) {
-            std::cout << command << std::endl;
+    try {
+        auto& script = _testScripts.at(index - 1);
+        for (auto& cmd : script.getCommands()) {
+            auto command = _input_controller.input(cmd);
+            executeStorage(command);
         }
     }
-    std::cout << std::endl;
+    catch (std::exception& e) {
+        std::cout << e.what() << std::endl;
+    }
 }
 
 template <typename T>
